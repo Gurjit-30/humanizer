@@ -2,7 +2,7 @@
 
 **Current Phase:** Phase 2: Core Engine & Integration
 **Status:** planning
-**Last Activity:** Phase 1 complete and verified.
+**Last Activity:** Phase 2 context gathered; decisions locked for Critique & Refine engine.
 
 ## Phase Progress
 - Phase 1: 100% (5/5 UAT)
