@@ -1,35 +1,31 @@
-# Roadmap: Humanizer AI
+# Project Roadmap — Humanizer AI
 
-## Proposed Roadmap
+**Status:** Phase 1 Complete 🎉
 
-**2 phases** | **10 requirements mapped** | All v1 requirements covered ✓
+## Milestones
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
-| 1 | Frontend Interface | Build a clean, responsive UI | WEB-01, WEB-02, WEB-03, WEB-04, WEB-05, WEB-06 | 3 |
-| 2 | Core Engine & Integration | Implement AI humanization logic | ENG-01, ENG-02, ENG-03, ENG-04 | 3 |
+| 1 | ✓ Phase 1 | Frontend Interface | WEB-01 to WEB-06 | 5/5 UAT Pass |
+| 2 | ○ Phase 2 | Core Engine & Integration | ENG-01 to ENG-04 | Logic verified |
 
-### Phase Details
+---
 
-**Phase 1: Frontend Interface**
-Goal: Build a clean, responsive, and functional UI for users to input text and view results.
-Requirements: WEB-01, WEB-02, WEB-03, WEB-04, WEB-05, WEB-06
-**UI hint**: yes
+## Phase Details
 
-Success criteria:
-1. UI renders correctly on desktop and mobile.
-2. Text can be pasted and the "Humanize" button triggers a mock loading state.
-3. Output text can be successfully copied to the clipboard.
+### Phase 1: Frontend Interface (Build a clean, responsive UI)
+- [x] UI Design Contract
+- [x] Research & Planning
+- [x] Implementation (Vite/React/Shadcn)
+- [x] UAT Verification (5/5 passed)
+**Status:** complete
 
-**Phase 2: Core Engine & Integration**
-Goal: Implement the AI humanization logic and connect it to the frontend.
-Requirements: ENG-01, ENG-02, ENG-03, ENG-04
-**UI hint**: no
-
-Success criteria:
-1. API successfully connects to an LLM provider using the expert prompt.
-2. Output text clearly eliminates AI-isms and demonstrates humanized structure.
-3. Frontend properly displays real API responses and handles errors gracefully.
+### Phase 2: Core Engine & Integration (Implement AI humanization logic)
+- [ ] Connect to LLM API (Gemini/OpenAI)
+- [ ] Implement Humanization Prompting
+- [ ] Wire Backend to Frontend
+- [ ] Final E2E Verification
+**Status:** pending
 
 ---
 *Last updated: 2026-05-06*
