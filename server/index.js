@@ -8,11 +8,11 @@ dotenv.config();
 const app = express();
 const port = 3001;
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'] }));
 app.use(express.json({ limit: '5mb' }));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 // Utility to split text into chunks by paragraph
 const chunkText = (text, maxLength = 3000) => {
@@ -98,7 +98,7 @@ app.post('/api/humanize', async (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', engine: 'Gemini 2.0 Flash' });
+  res.json({ status: 'ok', engine: 'Gemini 2.5 Flash' });
 });
 
 app.listen(port, () => {
