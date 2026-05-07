@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { ClipboardCopy, Sparkles, Trash2, Loader2 } from "lucide-react"
+import { ClipboardCopy, Sparkles, Trash2, Loader2, Info } from "lucide-react"
 import { TrustBanner } from "@/components/TrustBanner"
 import { History } from "@/components/History"
+import { SkeletonLoader, Metrics } from "@/components/Metrics"
 
 interface HistoryItem {
   id: string;
   original: string;
   humanized: string;
   timestamp: number;
+  score?: number;
 }
 
 export default function App() {
@@ -20,6 +22,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [history, setHistory] = useState<HistoryItem[]>([])
+  const [currentScore, setCurrentScore] = useState<number | undefined>(undefined)
 
   // Load history from LocalStorage
   useEffect(() => {
@@ -30,12 +33,13 @@ export default function App() {
   }, [])
 
   // Save history to LocalStorage
-  const saveToHistory = (original: string, humanized: string) => {
+  const saveToHistory = (original: string, humanized: string, score?: number) => {
     const newItem: HistoryItem = {
       id: Math.random().toString(36).substr(2, 9),
       original,
       humanized,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      score
     }
     const updatedHistory = [newItem, ...history].slice(0, 5) // Keep last 5
     setHistory(updatedHistory)
@@ -49,6 +53,8 @@ export default function App() {
     }
 
     setIsLoading(true)
+    setCurrentScore(undefined)
+    setOutputText('')
     
     // Status message cycle
     const messages = [
@@ -64,10 +70,10 @@ export default function App() {
     const msgInterval = setInterval(() => {
       msgIndex = (msgIndex + 1) % messages.length
       setStatusMessage(messages[msgIndex])
-    }, 3000)
+    }, 2500)
 
     try {
-      const response = await fetch('http://localhost:3001/api/humanize', {
+      const response = await fetch('/api/humanize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: inputText })
@@ -82,7 +88,8 @@ export default function App() {
 
       const data = await response.json()
       setOutputText(data.output)
-      saveToHistory(inputText, data.output)
+      setCurrentScore(data.humanityScore)
+      saveToHistory(inputText, data.output, data.humanityScore)
       toast.success("Text humanized successfully!")
     } catch (error: any) {
       if (error.message === 'SAFETY_BLOCKED') {
@@ -101,6 +108,7 @@ export default function App() {
   const handleSelectHistory = (item: HistoryItem) => {
     setInputText(item.original)
     setOutputText(item.humanized)
+    setCurrentScore(item.score)
     toast.info("Restored from history")
   }
 
@@ -114,6 +122,7 @@ export default function App() {
     if (inputText && !confirm("Are you sure you want to clear your input?")) return
     setInputText('')
     setOutputText('')
+    setCurrentScore(undefined)
   }
 
   return (
@@ -121,9 +130,13 @@ export default function App() {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <header className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900">Humanizer AI</h1>
-          <p className="text-slate-500 max-w-2xl mx-auto">
-            Transform AI-generated text into natural, human-written prose that bypasses detection.
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200/50 text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-2">
+            <Sparkles className="h-3 w-3 text-slate-900" />
+            <span>Academic Engine V1.2</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">Humanizer AI</h1>
+          <p className="text-slate-500 max-w-2xl mx-auto text-sm md:text-base">
+            Bypass AI detection with academic-grade humanization. Our engine injects burstiness and perplexity while maintaining scholarly rigor.
           </p>
         </header>
 
@@ -131,17 +144,17 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Input Section */}
           <div className="space-y-6">
-            <Card className="border-slate-200 shadow-sm overflow-hidden">
+            <Card className="border-slate-200 shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <div className="space-y-1">
                   <CardTitle className="text-xl">Input Text</CardTitle>
-                  <CardDescription>Paste your AI-generated essay or text here.</CardDescription>
+                  <CardDescription>Enter AI-generated content to humanize.</CardDescription>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={handleClear}
-                  className="text-slate-500 hover:text-red-600"
+                  className="text-slate-400 hover:text-rose-600 transition-colors"
                   title="Clear input"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -150,24 +163,27 @@ export default function App() {
               <CardContent className="space-y-4">
                 <Textarea 
                   placeholder="Paste your text here (e.g. Furthermore, it is important to note...)"
-                  className="min-h-[400px] resize-none border-slate-200 focus-visible:ring-slate-900"
+                  className="min-h-[400px] resize-none border-slate-200 focus-visible:ring-slate-900 bg-white"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                 />
+                
+                <Metrics text={inputText} />
+
                 <Button 
-                  className="w-full bg-slate-900 text-white hover:bg-slate-800 h-11 text-base font-medium relative"
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 text-base font-semibold shadow-lg shadow-slate-200 transition-all active:scale-[0.98]"
                   onClick={handleHumanize}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="animate-pulse">{statusMessage}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4" />
-                      <span>Humanize Text</span>
+                      <span>Humanize with Academic Precision</span>
                     </div>
                   )}
                 </Button>
@@ -179,45 +195,61 @@ export default function App() {
 
           {/* Output Section */}
           <div className="space-y-6 lg:sticky lg:top-8">
-            <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <Card className="border-slate-200 shadow-xl bg-white overflow-hidden ring-1 ring-slate-100">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-50">
                 <div className="space-y-1">
                   <CardTitle className="text-xl">Humanized Result</CardTitle>
-                  <CardDescription>Your natural-sounding text will appear here.</CardDescription>
+                  <CardDescription>Ready for submission or publication.</CardDescription>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={handleCopy}
                   disabled={!outputText || isLoading}
-                  className="border-slate-200"
+                  className="border-slate-200 font-semibold"
                 >
                   <ClipboardCopy className="mr-2 h-4 w-4" />
                   Copy
                 </Button>
               </CardHeader>
-              <CardContent>
-                {outputText ? (
-                  <div className="min-h-[445px] p-4 rounded-md bg-slate-50 border border-slate-200 text-slate-800 whitespace-pre-wrap leading-relaxed">
-                    {outputText}
+              <CardContent className="pt-6">
+                {isLoading ? (
+                  <div className="min-h-[445px]">
+                    <SkeletonLoader />
+                  </div>
+                ) : outputText ? (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="min-h-[445px] p-6 rounded-xl bg-slate-50/50 border border-slate-100 text-slate-800 whitespace-pre-wrap leading-relaxed font-serif text-[15px]">
+                      {outputText}
+                    </div>
+                    <Metrics text={outputText} score={currentScore} />
                   </div>
                 ) : (
-                  <div className="min-h-[445px] flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-md bg-slate-50/50">
-                    <Sparkles className="h-12 w-12 mb-4 opacity-10" />
-                    <p className="font-medium">Ready to humanize your writing.</p>
-                    <p className="text-xs mt-1">Output will appear here after processing.</p>
+                  <div className="min-h-[445px] flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/30">
+                    <div className="p-4 rounded-full bg-slate-100 mb-4">
+                      <Sparkles className="h-8 w-8 opacity-20" />
+                    </div>
+                    <p className="font-semibold text-slate-500">Awaiting Input</p>
+                    <p className="text-xs mt-1">Transform your draft into scholarly prose.</p>
                   </div>
                 )}
                 
                 <TrustBanner />
+                
+                <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-100 flex gap-3 items-start">
+                  <Info className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-emerald-800 leading-normal">
+                    <strong>Tip:</strong> Our engine uses Intellectual Hedging (e.g. "suggests", "implies") to mimic the natural caution found in peer-reviewed human writing.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
         {/* Footer info */}
-        <footer className="text-center pt-8 text-slate-400 text-xs tracking-wide">
-          <p>© 2026 HUMANIZER AI ENGINE. OPTIMIZED FOR ACADEMIC RIGOR.</p>
+        <footer className="text-center py-12 text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+          <p>© 2026 HUMANIZER AI ENGINE • ENCRYPTED END-TO-END • ACADEMIC COMPLIANT</p>
         </footer>
       </div>
     </div>
