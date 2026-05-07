@@ -19,7 +19,16 @@ app.use(express.json({ limit: '5mb' }));
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist')));
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+if (!GEMINI_API_KEY) {
+  console.error('FATAL: GEMINI_API_KEY environment variable is not set.');
+  process.exit(1);
+}
+
+console.log(`GEMINI_API_KEY loaded: ${GEMINI_API_KEY.slice(0, 8)}...`);
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 // Utility to split text into chunks by paragraph
@@ -126,14 +135,18 @@ app.post('/api/humanize', async (req, res) => {
       humanityScore: humanityScore
     });
   } catch (error) {
-    console.error('Humanization Error:', error);
+    console.error('Humanization Error:', error?.message || error);
     
     // Check for safety filter blocks
     if (error.message?.includes('SAFETY')) {
       return res.status(422).json({ error: 'SAFETY_BLOCKED' });
     }
 
-    res.status(500).json({ error: 'Internal Server Error' });
+    // Return actual error detail to help diagnose
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      detail: error?.message || 'Unknown error'
+    });
   }
 });
 
