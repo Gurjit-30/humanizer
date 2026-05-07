@@ -22,14 +22,13 @@ app.use(express.static(path.join(__dirname, '../dist')));
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-  console.error('FATAL: GEMINI_API_KEY environment variable is not set.');
-  process.exit(1);
+  console.error('WARNING: GEMINI_API_KEY environment variable is not set. /api/humanize will return 503.');
+} else {
+  console.log(`GEMINI_API_KEY loaded: ${GEMINI_API_KEY.slice(0, 8)}...`);
 }
 
-console.log(`GEMINI_API_KEY loaded: ${GEMINI_API_KEY.slice(0, 8)}...`);
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const model = genAI ? genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }) : null;
 
 // Utility to split text into chunks by paragraph
 const chunkText = (text, maxLength = 3000) => {
@@ -112,6 +111,13 @@ Instructions for HUMAN-LIKE flow:
 };
 
 app.post('/api/humanize', async (req, res) => {
+  if (!model) {
+    return res.status(503).json({ 
+      error: 'Service Unavailable',
+      detail: 'GEMINI_API_KEY is not configured on this server. Set it in Render environment variables.' 
+    });
+  }
+
   const { text } = req.body;
 
   if (!text) {
